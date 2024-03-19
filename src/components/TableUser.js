@@ -3,11 +3,25 @@ import { useEffect, useState } from "react";
 import Table from "react-bootstrap/Table";
 import { fetchAllUser } from "../services/userService";
 import ReactPaginate from "react-paginate";
+import ModalAddNew from "./ModalAddNew";
+import ModalEditUser from "./ModalEditUser";
 
 const TableUsers = (props) => {
   const [listUser, setListUser] = useState([]);
   // const [totalUser, setTotalUser] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [isShowModal, setShowModal] = useState(false);
+  const [isShowModalEdit, setShowModalEdit] = useState(false);
+  const [dataUserEdit, setDataUserEdit] = useState({});
+
+  const handleClose = () => {
+    setShowModal(false);
+    setShowModalEdit(false);
+  };
+
+  const handleUpdateTable = (user) => {
+    setListUser([user, ...listUser]);
+  };
 
   useEffect(() => {
     //call apis
@@ -28,8 +42,23 @@ const TableUsers = (props) => {
     getUser(+event.selected + 1);
   };
 
+  const handleEditUser = (user) => {
+    setDataUserEdit(user);
+    setShowModalEdit(true);
+  };
+
   return (
     <>
+      <div className="my-3 d-flex justify-content-between">
+        <span>
+          <h5>
+            <b>List user:</b>
+          </h5>
+        </span>
+        <button className="btn btn-success" onClick={() => setShowModal(true)}>
+          Add New User
+        </button>
+      </div>
       <Table striped bordered hover>
         <thead>
           <tr>
@@ -37,6 +66,7 @@ const TableUsers = (props) => {
             <th>Email</th>
             <th>First Name</th>
             <th>Last Name</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -49,6 +79,15 @@ const TableUsers = (props) => {
                   <td>{item.email}</td>
                   <td>{item.first_name}</td>
                   <td>{item.last_name}</td>
+                  <td>
+                    <button
+                      className="btn btn-warning mx-3"
+                      onClick={() => handleEditUser(item)}
+                    >
+                      Edit
+                    </button>
+                    <button className="btn btn-danger">Delete</button>
+                  </td>
                 </tr>
               );
             })}
@@ -73,6 +112,17 @@ const TableUsers = (props) => {
         containerClassName="pagination"
         activeClassName="active"
         renderOnZeroPageCount={null}
+      />
+
+      <ModalAddNew
+        show={isShowModal}
+        handleClose={handleClose}
+        handleUpdateTable={handleUpdateTable}
+      />
+      <ModalEditUser
+        show={isShowModalEdit}
+        handleClose={handleClose}
+        dataUserEdit={dataUserEdit}
       />
     </>
   );
