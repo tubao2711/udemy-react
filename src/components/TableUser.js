@@ -6,17 +6,30 @@ import ReactPaginate from "react-paginate";
 import ModalAddNew from "./ModalAddNew";
 import ModalEditUser from "./ModalEditUser";
 import ModalConfirm from "./ModalConfirm";
-import _ from "lodash";
+import "./TableUser.scss";
+import _, { clone, debounce } from "lodash";
+import { CSVLink, CSVDownload } from "react-csv";
+import Papa from "papaparse";
+import { toast } from "react-toastify";
 
 const TableUsers = (props) => {
   const [listUser, setListUser] = useState([]);
   // const [totalUser, setTotalUser] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [isShowModal, setShowModal] = useState(false);
+
   const [isShowModalEdit, setShowModalEdit] = useState(false);
   const [dataUserEdit, setDataUserEdit] = useState({});
+
   const [isShowModalDelete, setIsShowModalDelete] = useState(false);
   const [dataUserDelete, setDataUserDelete] = useState({});
+
+  const [sortBy, setSortBy] = useState("asc");
+  const [sortField, setSortField] = useState("id");
+
+  const [keyWord, setKeyWord] = useState("");
+
+  const [dataExport, setDataExport] = useState([]);
 
   const handleClose = () => {
     setShowModal(false);
@@ -70,22 +83,161 @@ const TableUsers = (props) => {
     setDataUserDelete(user);
   };
 
+  const handleSort = (sortBy, sortField) => {
+    setSortBy(sortBy);
+    setSortField(sortField);
+
+    let cloneListUser = _.cloneDeep(listUser);
+    cloneListUser = _.orderBy(cloneListUser, [sortField], [sortBy]);
+
+    setListUser(cloneListUser);
+  };
+
+  const handleSearch = debounce((event) => {
+    let term = event.target.value;
+    if (term) {
+      let cloneListUser = _.cloneDeep(listUser);
+      cloneListUser = cloneListUser.filter((item) => item.email.includes(term));
+      setListUser(cloneListUser);
+    } else {
+      getUser(1);
+    }
+  }, 500);
+
+  const getUserExport = (event, done) => {
+    let res = [];
+    if (listUser && listUser.length > 0) {
+      res.push(["ID", "Email", "First Name", "Last Name"]);
+      listUser.map((item, index) => {
+        let arr = [];
+        arr[0] = item.id;
+        arr[1] = item.email;
+        arr[2] = item.first_name;
+        arr[3] = item.last_name;
+        res.push(arr);
+      });
+
+      setDataExport(res);
+      done();
+    }
+  };
+
+  const handleImportCSV = (event) => {
+    if (event.target && event.target.files && event.target.files[0]) {
+      let file = event.target.files[0];
+      if (file.type !== "text/csv") {
+        toast.error("Only CSV file...");
+      }
+      Papa.parse(file, {
+        // header: true,
+        complete: function (results) {
+          let rawCSV = results.data;
+          if (rawCSV.length > 0) {
+            if (rawCSV[0] && rawCSV[0].length === 3) {
+              if (
+                rawCSV[0][0] !== "email" ||
+                rawCSV[0][1] !== "first_name" ||
+                rawCSV[0][2] !== "last_name"
+              ) {
+                toast.error("Wrong format Header CSV file!");
+              } else {
+                let result = [];
+                rawCSV.map((item, index) => {
+                  if (index > 0 && item.length === 3) {
+                    let obj = {};
+                    obj.email = item[0];
+                    obj.first_name = item[1];
+                    obj.last_name = item[2];
+                    result.push(obj);
+                  }
+                });
+                setListUser(result);
+              }
+            } else {
+              toast.error("Wrong format CSV file!");
+            }
+          } else {
+            toast.error("Not found data on CSV!");
+          }
+        },
+      });
+    }
+  };
   return (
     <>
-      <div className="my-3 d-flex justify-content-between">
+      <div className="my-3 d-flex justify-content-between add-new">
         <span>
-          <h5>List users:</h5>
+          <b>List users: </b>
         </span>
-        <button className="btn btn-success" onClick={() => setShowModal(true)}>
-          Add New User
-        </button>
+        <div className="group-btns">
+          <label className="btn btn-warning" htmlFor="test">
+            <i className="fa-solid fa-file-import"></i> Import
+          </label>
+          <input
+            id="test"
+            type="file"
+            hidden
+            onChange={(event) => handleImportCSV(event)}
+          />
+          <CSVLink
+            data={dataExport}
+            filename={"user.csv"}
+            className="btn btn-primary"
+            asyncOnClick={true}
+            onClick={getUserExport}
+          >
+            <i className="fa-solid fa-circle-down"></i> Export
+          </CSVLink>
+          <button
+            className="btn btn-success"
+            onClick={() => setShowModal(true)}
+          >
+            <i className="fa-solid fa-circle-plus"></i> Add new
+          </button>
+        </div>
+      </div>
+      <div className="mb-3 col-4">
+        <input
+          className="form-control"
+          placeholder="Search user by email..."
+          // value={keyWord}
+          onChange={(event) => handleSearch(event)}
+        />
       </div>
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th>ID</th>
+            <th>
+              <div className="sort-header">
+                <span>ID</span>
+                <span>
+                  <i
+                    className="fa-solid fa-arrow-down"
+                    onClick={() => handleSort("desc", "id")}
+                  ></i>
+                  <i
+                    className="fa-solid fa-arrow-up"
+                    onClick={() => handleSort("asc", "id")}
+                  ></i>
+                </span>
+              </div>
+            </th>
             <th>Email</th>
-            <th>First Name</th>
+            <th>
+              <div className="sort-header">
+                <span>First Name</span>
+                <span>
+                  <i
+                    className="fa-solid fa-arrow-down"
+                    onClick={() => handleSort("desc", "first_name")}
+                  ></i>
+                  <i
+                    className="fa-solid fa-arrow-up"
+                    onClick={() => handleSort("asc", "first_name")}
+                  ></i>
+                </span>
+              </div>
+            </th>
             <th>Last Name</th>
             <th>Action</th>
           </tr>
