@@ -1,20 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { loginApi } from "../services/userService";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { UserContext } from "../context/UserContext";
 const Login = () => {
   const navigate = useNavigate();
+  const { loginContext } = useContext(UserContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isShowPassword, setIsShowPassword] = useState(false);
   const [loadingApi, setLoadingApi] = useState(false);
 
-  useEffect(() => {
-    let token = localStorage.getItem("token");
-    if (token) {
-      navigate("/");
-    }
-  }, []);
+  // useEffect(() => {
+  //   let token = localStorage.getItem("token");
+  //   if (token) {
+  //     navigate("/");
+  //   }
+  // }, []);
 
   const handleLogin = async () => {
     if (!email && !password) {
@@ -24,7 +26,7 @@ const Login = () => {
     setLoadingApi(true);
     let res = await loginApi(email, password);
     if (res && res.token) {
-      localStorage.setItem("token", res.token);
+      loginContext(email, res.token);
       navigate("/");
     } else {
       if (res && res.status === 400) {
@@ -69,7 +71,10 @@ const Login = () => {
           &nbsp;Login
         </button>
         <div className="back">
-          <i className="fa-solid fa-chevron-left mx-2"></i>Go back
+          <i className="fa-solid fa-chevron-left mx-2"></i>
+          <Link to="/" className="go-back">
+            Go back
+          </Link>
         </div>
       </div>
     </>
