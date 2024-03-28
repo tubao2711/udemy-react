@@ -1,14 +1,11 @@
 import { Container, Modal } from "react-bootstrap";
 import "./App.scss";
 import Header from "./components/Header";
-import TableUsers from "./components/TableUser";
 import ModalAddNew from "./components/ModalAddNew";
 import { ToastContainer, toast } from "react-toastify";
-import Home from "./components/Home";
-import { Routes, Route, Link } from "react-router-dom";
-import Login from "./components/Login";
 import { useContext, useEffect } from "react";
 import { UserContext } from "./context/UserContext";
+import AppRoutes from "./routes/AppRoutes";
 function App() {
   const { user, loginContext } = useContext(UserContext);
 
@@ -25,11 +22,7 @@ function App() {
       <div className="app-container">
         <Header />
         <Container>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/users" element={<TableUsers />} />
-            <Route path="/login" element={<Login />} />
-          </Routes>
+          <AppRoutes />
         </Container>
       </div>
       <ToastContainer

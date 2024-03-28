@@ -35,11 +35,17 @@ const Login = () => {
     }
     setLoadingApi(false);
   };
+
+  const handlePress = (event) => {
+    if (event && event.key == "Enter") {
+      handleLogin();
+    }
+  };
   return (
     <>
       <div className="login-conatiner col-12 col-sm-4 ">
         <div className="title">Login</div>
-        <div className="text">Email or Username (eve.holt@reqres.in)</div>
+        <div className="text">eve.holt@reqres.in</div>
         <input
           value={email}
           onChange={(event) => setEmail(event.target.value)}
@@ -52,6 +58,7 @@ const Login = () => {
             onChange={(event) => setPassword(event.target.value)}
             type={isShowPassword === true ? "text" : "password"}
             placeholder="Password..."
+            onKeyDown={(event) => handlePress(event)}
           />
           <i
             className={
